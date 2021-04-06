@@ -1,13 +1,10 @@
 pragma solidity ^0.6.0;
-//pragma experimental ABIEncoderV2;
-
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-
-import './lib/Safe112.sol';
-import './owner/AdminRole.sol';
-import './utils/ContractGuard.sol';
-import './interfaces/ISuperNovaAsset.sol';
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "./lib/Safe112.sol";
+import "./owner/AdminRole.sol";
+import "./utils/ContractGuard.sol";
+import "./interfaces/ISuperNovaAsset.sol";
 
 contract SHAREWrapper {
     using SafeMath for uint256;
@@ -36,7 +33,7 @@ contract SHAREWrapper {
         uint256 directorLPT = _balances[msg.sender];
         require(
             directorLPT >= amount,
-            'Expansion: withdraw request greater than staked amount'
+            "Expansion: withdraw request greater than staked amount"
         );
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = directorLPT.sub(amount);
@@ -78,11 +75,12 @@ contract ShareBoardroom is SHAREWrapper, ContractGuard, AdminRole {
         cash = _cash;
         share = _share;
 
-        BoardSnapshot memory genesisSnapshot = BoardSnapshot({
-            time: block.number,
-            rewardReceived: 0,
-            rewardPerLPT: 0
-        });
+        BoardSnapshot memory genesisSnapshot =
+            BoardSnapshot({
+                time: block.number,
+                rewardReceived: 0,
+                rewardPerLPT: 0
+            });
         boardHistory.push(genesisSnapshot);
     }
 
@@ -90,7 +88,7 @@ contract ShareBoardroom is SHAREWrapper, ContractGuard, AdminRole {
     modifier directorExists {
         require(
             balanceOf(msg.sender) > 0,
-            'Expansion: The director does not exist'
+            "Expansion: The director does not exist"
         );
         _;
     }
@@ -106,6 +104,10 @@ contract ShareBoardroom is SHAREWrapper, ContractGuard, AdminRole {
     }
 
     /* ========== VIEW FUNCTIONS ========== */
+
+    function getLastStakeTime() public view returns (uint256) {
+        return lastStakeTime[msg.sender];
+    }
 
     // =========== Snapshot getters
 
@@ -157,7 +159,7 @@ contract ShareBoardroom is SHAREWrapper, ContractGuard, AdminRole {
         onlyOneBlock
         updateReward(msg.sender)
     {
-        require(amount > 0, 'Expansion: Cannot stake 0');
+        require(amount > 0, "Expansion: Cannot stake 0");
         super.stake(amount);
         emit Staked(msg.sender, amount);
         lastStakeTime[msg.sender] = block.timestamp;
@@ -170,8 +172,11 @@ contract ShareBoardroom is SHAREWrapper, ContractGuard, AdminRole {
         directorExists
         updateReward(msg.sender)
     {
-        require(amount > 0, 'Expansion: Cannot withdraw 0');
-        require(lastStakeTime[msg.sender] + 259200 < block.timestamp, "Expansion: Cannot withdraw in three ERA");
+        require(amount > 0, "Expansion: Cannot withdraw 0");
+        require(
+            lastStakeTime[msg.sender] + 259200 < block.timestamp,
+            "Expansion: Cannot withdraw in three ERA"
+        );
         super.withdraw(amount);
         emit Withdrawn(msg.sender, amount);
     }
@@ -195,21 +200,22 @@ contract ShareBoardroom is SHAREWrapper, ContractGuard, AdminRole {
         onlyOneBlock
         onlyAdmin
     {
-        require(amount > 0, 'Expansion: Cannot allocate 0');
+        require(amount > 0, "Expansion: Cannot allocate 0");
         require(
             totalSupply() > 0,
-            'Expansion: Cannot allocate when totalSupply is 0'
+            "Expansion: Cannot allocate when totalSupply is 0"
         );
 
         // Create & add new snapshot
         uint256 prevRPS = getLatestSnapshot().rewardPerLPT;
         uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply()));
 
-        BoardSnapshot memory newSnapshot = BoardSnapshot({
-            time: block.number,
-            rewardReceived: amount,
-            rewardPerLPT: nextRPS
-        });
+        BoardSnapshot memory newSnapshot =
+            BoardSnapshot({
+                time: block.number,
+                rewardReceived: amount,
+                rewardPerLPT: nextRPS
+            });
         boardHistory.push(newSnapshot);
 
         cash.safeTransferFrom(msg.sender, address(this), amount);

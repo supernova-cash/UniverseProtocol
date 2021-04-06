@@ -1,50 +1,85 @@
 pragma solidity ^0.6.0;
 //pragma experimental ABIEncoderV2;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "./lib/Safe112.sol";
+import "./owner/AdminRole.sol";
+import "./utils/ContractGuard.sol";
+import "./interfaces/ISuperNovaAsset.sol";
 
-import './lib/Safe112.sol';
-import './owner/AdminRole.sol';
-import './utils/ContractGuard.sol';
-import './interfaces/ISuperNovaAsset.sol';
-
-contract LPTWrapper {
+contract SHAREWrapper2 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    IERC20 public lpt;
+    IERC20 public share0;
+    IERC20 public share1;
 
-    uint256 private _totalSupply;
-    mapping(address => uint256) private _balances;
+    uint256 private _totalSupply0;
+    uint256 private _totalSupply1;
+    mapping(address => uint256) private _balances0;
+    mapping(address => uint256) private _balances1;
 
     function totalSupply() public view returns (uint256) {
-        return _totalSupply;
+        return _totalSupply0.add(_totalSupply1);
+    }
+
+    function totalSupply0() public view returns (uint256) {
+        return _totalSupply0;
+    }
+
+    function totalSupply1() public view returns (uint256) {
+        return _totalSupply1;
     }
 
     function balanceOf(address account) public view returns (uint256) {
-        return _balances[account];
+        return _balances0[account].add(_balances1[account]);
     }
 
-    function stake(uint256 amount) public virtual {
-        _totalSupply = _totalSupply.add(amount);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
-        lpt.safeTransferFrom(msg.sender, address(this), amount);
+    function balanceOf0(address account) public view returns (uint256) {
+        return _balances0[account];
     }
 
-    function withdraw(uint256 amount) public virtual {
-        uint256 directorLPT = _balances[msg.sender];
+    function balanceOf1(address account) public view returns (uint256) {
+        return _balances1[account];
+    }
+
+    function stake0(uint256 amount) public virtual {
+        _totalSupply0 = _totalSupply0.add(amount);
+        _balances0[msg.sender] = _balances0[msg.sender].add(amount);
+        share0.safeTransferFrom(msg.sender, address(this), amount);
+    }
+
+    function stake1(uint256 amount) public virtual {
+        _totalSupply1 = _totalSupply1.add(amount);
+        _balances1[msg.sender] = _balances1[msg.sender].add(amount);
+        share1.safeTransferFrom(msg.sender, address(this), amount);
+    }
+
+    function withdraw0(uint256 amount) public virtual {
+        uint256 directorLPT0 = _balances0[msg.sender];
         require(
-            directorLPT >= amount,
-            'Expansion: withdraw request greater than staked amount'
+            directorLPT0 >= amount,
+            "Expansion: withdraw request greater than staked amount"
         );
-        _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = directorLPT.sub(amount);
-        lpt.safeTransfer(msg.sender, amount);
+        _totalSupply0 = _totalSupply0.sub(amount);
+        _balances0[msg.sender] = directorLPT0.sub(amount);
+        share0.safeTransfer(msg.sender, amount);
+    }
+
+    function withdraw1(uint256 amount) public virtual {
+        uint256 directorLPT1 = _balances1[msg.sender];
+        require(
+            directorLPT1 >= amount,
+            "Expansion: withdraw request greater than staked amount"
+        );
+        _totalSupply1 = _totalSupply1.sub(amount);
+        _balances1[msg.sender] = directorLPT1.sub(amount);
+        share1.safeTransfer(msg.sender, amount);
     }
 }
 
-contract LPBoardroom is LPTWrapper, ContractGuard, AdminRole {
+contract ShareBoardroom2 is SHAREWrapper2, ContractGuard, AdminRole {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -74,15 +109,17 @@ contract LPBoardroom is LPTWrapper, ContractGuard, AdminRole {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(IERC20 _cash, IERC20 _lpt) public {
+    constructor(IERC20 _cash, IERC20 _share0, IERC20 _share1) public {
         cash = _cash;
-        lpt = _lpt;
+        share0 = _share0;
+        share1 = _share1;
 
-        BoardSnapshot memory genesisSnapshot = BoardSnapshot({
-            time: block.number,
-            rewardReceived: 0,
-            rewardPerLPT: 0
-        });
+        BoardSnapshot memory genesisSnapshot =
+            BoardSnapshot({
+                time: block.number,
+                rewardReceived: 0,
+                rewardPerLPT: 0
+            });
         boardHistory.push(genesisSnapshot);
     }
 
@@ -90,7 +127,7 @@ contract LPBoardroom is LPTWrapper, ContractGuard, AdminRole {
     modifier directorExists {
         require(
             balanceOf(msg.sender) > 0,
-            'Expansion: The director does not exist'
+            "Expansion: The director does not exist"
         );
         _;
     }
@@ -155,33 +192,58 @@ contract LPBoardroom is LPTWrapper, ContractGuard, AdminRole {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(uint256 amount)
+    function stake0(uint256 amount)
         public
         override
         onlyOneBlock
         updateReward(msg.sender)
     {
-        require(amount > 0, 'Expansion: Cannot stake 0');
-        super.stake(amount);
+        require(amount > 0, "Expansion: Cannot stake 0");
+        super.stake0(amount);
         emit Staked(msg.sender, amount);
         lastStakeTime[msg.sender] = block.timestamp;
     }
 
-    function withdraw(uint256 amount)
+    function stake1(uint256 amount)
+        public
+        override
+        onlyOneBlock
+        updateReward(msg.sender)
+    {
+        require(amount > 0, "Expansion: Cannot stake 0");
+        super.stake1(amount);
+        emit Staked(msg.sender, amount);
+    }
+
+    function withdraw0(uint256 amount)
         public
         override
         onlyOneBlock
         directorExists
         updateReward(msg.sender)
     {
-        require(amount > 0, 'Expansion: Cannot withdraw 0');
-        require(lastStakeTime[msg.sender] + 86400 < block.timestamp, "Expansion: Cannot withdraw in ONE ERA");
-        super.withdraw(amount);
+        require(amount > 0, "Expansion: Cannot withdraw 0");
+        require(
+            lastStakeTime[msg.sender] + 259200 < block.timestamp,
+            "Expansion: Cannot withdraw in three ERA"
+        );
+        super.withdraw0(amount);
+        emit Withdrawn(msg.sender, amount);
+    }
+
+    function withdraw1(uint256 amount)
+        public
+        override
+        onlyOneBlock
+        directorExists
+        updateReward(msg.sender)
+    {
+        require(0 > 1, "Cannot withdraw sSHARE");
         emit Withdrawn(msg.sender, amount);
     }
 
     function exit() external {
-        withdraw(balanceOf(msg.sender));
+        withdraw0(balanceOf0(msg.sender));
         claimReward();
     }
 
@@ -199,21 +261,22 @@ contract LPBoardroom is LPTWrapper, ContractGuard, AdminRole {
         onlyOneBlock
         onlyAdmin
     {
-        require(amount > 0, 'Expansion: Cannot allocate 0');
+        require(amount > 0, "Expansion: Cannot allocate 0");
         require(
             totalSupply() > 0,
-            'Expansion: Cannot allocate when totalSupply is 0'
+            "Expansion: Cannot allocate when totalSupply is 0"
         );
 
         // Create & add new snapshot
         uint256 prevRPS = getLatestSnapshot().rewardPerLPT;
         uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply()));
 
-        BoardSnapshot memory newSnapshot = BoardSnapshot({
-            time: block.number,
-            rewardReceived: amount,
-            rewardPerLPT: nextRPS
-        });
+        BoardSnapshot memory newSnapshot =
+            BoardSnapshot({
+                time: block.number,
+                rewardReceived: amount,
+                rewardPerLPT: nextRPS
+            });
         boardHistory.push(newSnapshot);
 
         cash.safeTransferFrom(msg.sender, address(this), amount);

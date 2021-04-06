@@ -1,27 +1,26 @@
 pragma solidity ^0.6.0;
 
-import '@openzeppelin/contracts/math/Math.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import "@openzeppelin/contracts/math/Math.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import './interfaces/IOracle.sol';
-import './interfaces/IBoardroom.sol';
-import './interfaces/ISuperNovaAsset.sol';
-import './interfaces/ISimpleERCFund.sol';
-import './lib/Babylonian.sol';
-import './lib/FixedPoint.sol';
-import './lib/Safe112.sol';
-import './owner/AdminRole.sol';
-import './utils/Epoch.sol';
-import './utils/ContractGuard.sol';
-import './Fund.sol';
-import './pool/CashPool.sol';
-import './pool/SharePool.sol';
-import './pool/PegPool.sol';
+import "./interfaces/IOracle.sol";
+import "./interfaces/IBoardroom.sol";
+import "./interfaces/ISuperNovaAsset.sol";
+import "./interfaces/ISimpleERCFund.sol";
+import "./lib/Babylonian.sol";
+import "./lib/FixedPoint.sol";
+import "./lib/Safe112.sol";
+import "./owner/AdminRole.sol";
+import "./utils/Epoch.sol";
+import "./utils/ContractGuard.sol";
+import "./Fund.sol";
+import "./pool/CashPool.sol";
+import "./pool/SharePool.sol";
+import "./pool/PegPool.sol";
 
-
-contract Treasury is ContractGuard, Epoch {
+contract Treasury2 is ContractGuard, Epoch {
     using FixedPoint for *;
     using SafeERC20 for IERC20;
     using Address for address;
@@ -53,7 +52,7 @@ contract Treasury is ContractGuard, Epoch {
     uint256 public cashPriceOne;
     uint256 public cashPriceCeiling;
     uint256 public cashPriceFloor;
-    uint256 public fundAllocationRate = 5; 
+    uint256 public fundAllocationRate = 5;
     uint256 public inflationPercentCeil;
     uint256 public initShare;
 
@@ -85,8 +84,8 @@ contract Treasury is ContractGuard, Epoch {
         pegPool = _pegPool;
         initShare = _initShare;
 
-        // cashPriceOne = 10**18;
-        cashPriceOne = 10**8;
+        cashPriceOne = 10**18;
+        // cashPriceOne = 10**8;
         cashPriceCeiling = uint256(105).mul(cashPriceOne).div(10**2);
         cashPriceFloor = uint256(95).mul(cashPriceOne).div(10**2);
         // inflation at most 100%
@@ -96,7 +95,7 @@ contract Treasury is ContractGuard, Epoch {
     /* =================== Modifier =================== */
 
     modifier checkMigration {
-        require(!migrated, 'Treasury: migrated');
+        require(!migrated, "Treasury: migrated");
 
         _;
     }
@@ -104,10 +103,10 @@ contract Treasury is ContractGuard, Epoch {
     modifier checkAdmin {
         require(
             AdminRole(cash).isAdmin(address(this)) &&
-            AdminRole(share).isAdmin(address(this)) &&
-            AdminRole(shareboardroom).isAdmin(address(this)) &&
-            AdminRole(lpboardroom).isAdmin(address(this)),
-            'Treasury: need more permission'
+                AdminRole(share).isAdmin(address(this)) &&
+                AdminRole(shareboardroom).isAdmin(address(this)) &&
+                AdminRole(lpboardroom).isAdmin(address(this)),
+            "Treasury: need more permission"
         );
 
         _;
@@ -129,12 +128,12 @@ contract Treasury is ContractGuard, Epoch {
         try IOracle(oracle_).consult(cash, 1e18) returns (uint256 price) {
             return price.mul(cashPriceOne).div(cashPriceOne);
         } catch {
-            revert('Treasury: failed to consult cash price from the oracle');
+            revert("Treasury: failed to consult cash price from the oracle");
         }
     }
 
     function migrate(address target) public onlyAdmin checkAdmin {
-        require(!migrated, 'Treasury: migrated');
+        require(!migrated, "Treasury: migrated");
 
         // cash
         AdminRole(cash).addAdmin(target);
@@ -145,10 +144,10 @@ contract Treasury is ContractGuard, Epoch {
         AdminRole(share).addAdmin(target);
         AdminRole(share).renounceAdmin();
         IERC20(share).transfer(target, IERC20(share).balanceOf(address(this)));
-    
+
         // peg
         IERC20(peg).transfer(target, IERC20(peg).balanceOf(address(this)));
-    
+
         migrated = true;
         emit Migration(target);
     }
@@ -168,43 +167,52 @@ contract Treasury is ContractGuard, Epoch {
     /* ========== MUTABLE FUNCTIONS ========== */
 
     function _updateCashPrice() internal {
-        try IOracle(oracle).update()  {} catch {}
+        try IOracle(oracle).update() {} catch {}
     }
 
-    function allocateSeigniorage() //每个周期执行一次
+    function allocateSeigniorage()
         external
+        //每个周期执行一次
         onlyOneBlock
         checkMigration
         checkStartTime
         checkEpoch
         checkAdmin
-    {   
+    {
         //release
-        if(cashPoolLastAmount > 0){
+        if (cashPoolLastAmount > 0) {
             CashPool(cashPool).release(cashPoolLastAmount);
             cashPoolLastAmount = 0;
         }
-        if(sharePoolLastAmount > 0){
+        if (sharePoolLastAmount > 0) {
             SharePool(sharePool).release(sharePoolLastAmount);
             sharePoolLastAmount = 0;
         }
-        if(pegPoolLastAmount > 0){
+        if (pegPoolLastAmount > 0) {
             PegPool(pegPool).release(pegPoolLastAmount);
             pegPoolLastAmount = 0;
         }
 
         //fund里面的cash全部销毁
-        uint256 burnAmount= IERC20(cash).balanceOf(fund);
-        if(burnAmount > 0){
-            ISimpleERCFund(fund).withdraw(cash, burnAmount, address(this), "burn cash"); 
+        uint256 burnAmount = IERC20(cash).balanceOf(fund);
+        if (burnAmount > 0) {
+            ISimpleERCFund(fund).withdraw(
+                cash,
+                burnAmount,
+                address(this),
+                "burn cash"
+            );
             ISuperNovaAsset(cash).burn(burnAmount);
             emit BurnCash(now, burnAmount);
         }
 
         _updateCashPrice();
         uint256 cashPrice = _getCashPrice(oracle);
-        uint256 percentage = cashPriceOne > cashPrice ? cashPriceOne.sub(cashPrice) : cashPrice.sub(cashPriceOne);
-        //当价格<0.95时 
+        uint256 percentage =
+            cashPriceOne > cashPrice
+                ? cashPriceOne.sub(cashPrice)
+                : cashPrice.sub(cashPriceOne);
+        //当价格<0.95时
         if (cashPrice <= cashPriceFloor) {
             // 增发share 让用户用cash买share
             uint256 shareAmount = initShare.div(10**2);
@@ -213,17 +221,18 @@ contract Treasury is ContractGuard, Epoch {
             sharePoolLastAmount = shareAmount;
 
             // 从fund里拿出peg 回收cash
-            uint256 pegAmount = IERC20(peg).balanceOf(fund).mul(percentage).div(cashPriceOne);
+            uint256 pegAmount =
+                IERC20(peg).balanceOf(fund).mul(percentage).div(cashPriceOne);
             ISimpleERCFund(fund).withdraw(
                 peg,
                 pegAmount,
                 pegPool,
-                'Treasury: Desposit PegPool'
+                "Treasury: Desposit PegPool"
             );
             emit DespositPegPool(now, pegAmount);
             pegPoolLastAmount = pegAmount;
         }
-    
+
         if (cashPrice <= cashPriceCeiling) {
             return; // just advance epoch instead revert
         }
@@ -233,7 +242,7 @@ contract Treasury is ContractGuard, Epoch {
 
         percentage = Math.min(percentage, inflationPercentCeil);
 
-        uint256 seigniorage = cashSupply.mul(percentage).div(10**8);
+        uint256 seigniorage = cashSupply.mul(percentage).div(10**18);
 
         uint256 fundReserve = seigniorage.mul(fundAllocationRate).div(100);
 
@@ -244,18 +253,21 @@ contract Treasury is ContractGuard, Epoch {
             emit DespositCashPool(now, fundReserve);
             cashPoolLastAmount = fundReserve;
         }
-    
+
         // boardroom
         uint256 boardroomReserve = seigniorage.sub(fundReserve);
         if (boardroomReserve > 0) {
             // share董事会分到10%
             uint256 shareBoardroomReserve = boardroomReserve.div(10);
             // lp董事会分到90%
-            uint256 lpBoardroomReserve = boardroomReserve.sub(shareBoardroomReserve);
+            uint256 lpBoardroomReserve =
+                boardroomReserve.sub(shareBoardroomReserve);
             // 批准国库合约储备量数额
             IERC20(cash).safeApprove(shareboardroom, shareBoardroomReserve);
             //调用Boardroom合约的allocateSeigniorage方法,将CASH存入董事会
-            IBoardroom(shareboardroom).allocateSeigniorage(shareBoardroomReserve);
+            IBoardroom(shareboardroom).allocateSeigniorage(
+                shareBoardroomReserve
+            );
 
             // 批准国库合约储备量数额
             IERC20(cash).safeApprove(lpboardroom, lpBoardroomReserve);
@@ -265,7 +277,7 @@ contract Treasury is ContractGuard, Epoch {
             emit BoardroomFunded(now, boardroomReserve);
         }
     }
-    
+
     // GOV
     event Migration(address indexed target);
     event ContributionPoolChanged(address indexed operator, address newFund);
