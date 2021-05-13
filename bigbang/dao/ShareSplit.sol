@@ -58,7 +58,7 @@ contract ShareSplit is AdminRole{
         IERC20(share).safeTransfer(msg.sender, amount);
     }
 
-    function split() public {
+    function split() external {
         uint256 amount = balanceOf(msg.sender);
         require(amount > 0, "Cannot split 0");
 
@@ -105,7 +105,7 @@ contract ShareSplit is AdminRole{
         IERC20(vShare).safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function setVoteStats(uint8 voteStats_) public onlyAdmin {
+    function setVoteStats(uint8 voteStats_) external onlyAdmin {
         voteStats = voteStats_;
     }
 }

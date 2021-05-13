@@ -132,7 +132,7 @@ contract Treasury2 is ContractGuard, Epoch {
         }
     }
 
-    function migrate(address target) public onlyAdmin checkAdmin {
+    function migrate(address target) external onlyAdmin checkAdmin {
         require(!migrated, "Treasury: migrated");
 
         // cash
@@ -156,11 +156,11 @@ contract Treasury2 is ContractGuard, Epoch {
         initShare = initShare_;
     }
 
-    function setFund(address newFund) public onlyAdmin {
+    function setFund(address newFund) external onlyAdmin {
         fund = newFund;
     }
 
-    function setFundAllocationRate(uint256 rate) public onlyAdmin {
+    function setFundAllocationRate(uint256 rate) external onlyAdmin {
         fundAllocationRate = rate;
     }
 

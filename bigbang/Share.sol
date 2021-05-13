@@ -9,7 +9,7 @@ contract Share is ERC20Burnable, AdminRole {
     }
 
     function mint(address recipient_, uint256 amount_)
-        public
+        external
         onlyAdmin
         returns (bool)
     {
@@ -19,12 +19,12 @@ contract Share is ERC20Burnable, AdminRole {
         return balanceAfter >= balanceBefore;
     }
 
-    function burn(uint256 amount) public override onlyAdmin {
+    function burn(uint256 amount) external override onlyAdmin {
         super.burn(amount);
     }
 
     function burnFrom(address account, uint256 amount)
-        public
+        external
         override
         onlyAdmin
     {
@@ -38,7 +38,7 @@ contract SShare is ERC20Burnable, AdminRole {
     }
 
     function mint(address recipient_, uint256 amount_)
-        public
+        external
         onlyAdmin
         returns (bool)
     {
@@ -53,7 +53,7 @@ contract SShare is ERC20Burnable, AdminRole {
     }
 
     function burnFrom(address account, uint256 amount)
-        public
+        external
         override
         onlyAdmin
     {
@@ -62,10 +62,10 @@ contract SShare is ERC20Burnable, AdminRole {
 }
 
 contract VShare is ERC20Burnable, AdminRole {
-    constructor() public ERC20("vSHARE", "vSHARE") {}
+    constructor() external ERC20("vSHARE", "vSHARE") {}
 
     function mint(address recipient_, uint256 amount_)
-        public
+        external
         onlyAdmin
         returns (bool)
     {
@@ -75,12 +75,12 @@ contract VShare is ERC20Burnable, AdminRole {
         return balanceAfter >= balanceBefore;
     }
 
-    function burn(uint256 amount) public override onlyAdmin {
+    function burn(uint256 amount) external override onlyAdmin {
         super.burn(amount);
     }
 
     function burnFrom(address account, uint256 amount)
-        public
+        external
         override
         onlyAdmin
     {

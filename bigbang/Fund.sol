@@ -13,7 +13,7 @@ contract Fund is ISimpleERCFund, AdminRole {
         address token,
         uint256 amount,
         string memory reason
-    ) public override {
+    ) external override {
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         emit Deposit(msg.sender, now, reason);
     }
@@ -23,7 +23,7 @@ contract Fund is ISimpleERCFund, AdminRole {
         uint256 amount,
         address to,
         string memory reason
-    ) public override onlyAdmin {
+    ) external override onlyAdmin {
         IERC20(token).safeTransfer(to, amount);
         emit Withdrawal(msg.sender, to, now, reason);
     }

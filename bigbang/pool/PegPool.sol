@@ -107,7 +107,7 @@ contract PegPool is CASHWrapper, ContractGuard{
         starttime = starttime_;
     }
 
-    function setFund(address newFund) public onlyAdmin {
+    function setFund(address newFund) external onlyAdmin {
         fund = newFund;
     }
 

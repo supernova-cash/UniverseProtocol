@@ -139,11 +139,11 @@ contract LPBoardroom is LPTWrapper, ContractGuard, AdminRole {
 
     // =========== Director getters
 
-    function rewardPerLPT() public view returns (uint256) {
+    function rewardPerLPT() external view returns (uint256) {
         return getLatestSnapshot().rewardPerLPT;
     }
 
-    function earned(address director) public view returns (uint256) {
+    function earned(address director) external view returns (uint256) {
         uint256 latestRPS = getLatestSnapshot().rewardPerLPT;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerLPT;
 
@@ -156,7 +156,7 @@ contract LPBoardroom is LPTWrapper, ContractGuard, AdminRole {
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     function stake(uint256 amount)
-        public
+        external
         override
         onlyOneBlock
         updateReward(msg.sender)
@@ -168,7 +168,7 @@ contract LPBoardroom is LPTWrapper, ContractGuard, AdminRole {
     }
 
     function withdraw(uint256 amount)
-        public
+        external
         override
         onlyOneBlock
         directorExists
