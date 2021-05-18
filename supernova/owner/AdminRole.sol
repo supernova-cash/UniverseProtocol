@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.0;
-
+import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/EnumerableSet.sol';
 
 contract AdminRole{
@@ -39,7 +39,7 @@ contract AdminRole{
      * @dev 返回所有管理员
      * @return admins 管理员数组
      */
-    function allAdmins() public view returns (address[] memory admins) {
+    function allAdmins() external view returns (address[] memory admins) {
         admins = new address[](_admins.length());
         for(uint256 i=0;i<_admins.length();i++){
             admins[i] = _admins.at(i);
@@ -50,7 +50,7 @@ contract AdminRole{
      * @dev 添加管理员
      * @param account 帐号地址
      */
-    function addAdmin(address account) public onlyAdmin {
+    function addAdmin(address account) external onlyOwner {
         _addAdmin(account);
     }
 
@@ -58,14 +58,14 @@ contract AdminRole{
      * @dev 移除管理员
      * @param account 帐号地址
      */
-    function removeAdmin(address account) public onlyAdmin {
+    function removeAdmin(address account) external onlyOwner {
         _removeAdmin(account);
     }
 
     /**
      * @dev 撤销管理员
      */
-    function renounceAdmin() public {
+    function renounceAdmin() external {
         _removeAdmin(msg.sender);
     }
 

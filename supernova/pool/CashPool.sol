@@ -22,6 +22,7 @@ contract CashPool is PEGWrapper, ContractGuard{
         address fund_,
         uint256 starttime_
     ) public {
+        require((cash_ != address(0)) && (peg_ != address(0)) && (fund_ != address(0)), "CashPool: the zero address");
         cash = cash_;
         peg = IERC20(peg_);
         starttime = starttime_;
@@ -51,11 +52,6 @@ contract CashPool is PEGWrapper, ContractGuard{
         override
     {
         require(0 > 1, "unable to withdraw");
-    }
-
-    function exit() external {
-        require(block.timestamp >= starttime, 'CashPool: not start');
-        getReward();
     }
 
     function getReward() public {
@@ -90,6 +86,8 @@ contract CashPool is PEGWrapper, ContractGuard{
         }
         emit RewardAdded(amount);
 
+        balanceClean();
+
         uint256 fundamount = totalSupply();
         peg.safeApprove(fund, fundamount);
         // 调用fund合约的存款方法存入sFUND
@@ -99,8 +97,6 @@ contract CashPool is PEGWrapper, ContractGuard{
             'CashPool: Desposit Fund'
         );
         emit DespositFund(now, fundamount);
-
-        balanceClean();
     }
 
     function updateStartTime(uint256 starttime_)
@@ -108,10 +104,13 @@ contract CashPool is PEGWrapper, ContractGuard{
         onlyAdmin
     {   
         starttime = starttime_;
+        emit UpdateStartTime(starttime_);
     }
 
     function setFund(address newFund) public onlyAdmin {
+        require(newFund != address(0), "setFund: the zero address");
         fund = newFund;
+        emit SetFund(newFund);
     }
 
     event RewardAdded(uint256 reward);
@@ -119,5 +118,7 @@ contract CashPool is PEGWrapper, ContractGuard{
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
     event DespositFund(uint256 timestamp, uint256 fundamount);
+    event UpdateStartTime(uint256 timestamp);
+    event SetFund(address newFund);
 
 }

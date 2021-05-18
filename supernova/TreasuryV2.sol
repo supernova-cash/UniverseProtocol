@@ -72,6 +72,16 @@ contract Treasury2 is ContractGuard, Epoch {
         uint256 _initShare,
         uint256 _startTime
     ) public Epoch(1 days, _startTime, 0) {
+        require(_cash != address(0), "Treasury2: the zero address");
+        require(_share != address(0), "Treasury2: the zero address");
+        require(_peg != address(0), "Treasury2: the zero address");
+        require(_oracle != address(0), "Treasury2: the zero address");
+        require(_shareboardroom != address(0), "Treasury2: the zero address");
+        require(_lpboardroom != address(0), "Treasury2: the zero address");
+        require(_fund != address(0), "Treasury2: the zero address");
+        require(_cashPool != address(0), "Treasury2: the zero address");
+        require(_sharePool != address(0), "Treasury2: the zero address");
+        require(_pegPool != address(0), "Treasury2: the zero address");
         cash = _cash;
         share = _share;
         peg = _peg;
@@ -135,6 +145,8 @@ contract Treasury2 is ContractGuard, Epoch {
     function migrate(address target) public onlyAdmin checkAdmin {
         require(!migrated, "Treasury: migrated");
 
+        migrated = true;
+
         // cash
         AdminRole(cash).addAdmin(target);
         AdminRole(cash).renounceAdmin();
@@ -148,20 +160,23 @@ contract Treasury2 is ContractGuard, Epoch {
         // peg
         IERC20(peg).transfer(target, IERC20(peg).balanceOf(address(this)));
 
-        migrated = true;
         emit Migration(target);
     }
 
     function setInitShare(uint256 initShare_) public onlyAdmin {
         initShare = initShare_;
+        emit SetInitShare(initShare_);
     }
 
     function setFund(address newFund) public onlyAdmin {
+        require(newFund != address(0), "setFund: the zero address");
         fund = newFund;
+        emit SetFund(newFund);
     }
 
     function setFundAllocationRate(uint256 rate) public onlyAdmin {
         fundAllocationRate = rate;
+        emit SetFundAllocationRate(rate);
     }
 
     /* ========== MUTABLE FUNCTIONS ========== */
@@ -295,4 +310,7 @@ contract Treasury2 is ContractGuard, Epoch {
     event SharePoolFunded(uint256 timestamp, uint256 seigniorage);
     event CashPoolFunded(uint256 timestamp, uint256 seigniorage);
     event PegPoolFunded(uint256 timestamp, uint256 seigniorage);
+    event SetInitShare(uint256 initShare);
+    event SetFund(address newFund);
+    event SetFundAllocationRate(uint256 rate);
 }

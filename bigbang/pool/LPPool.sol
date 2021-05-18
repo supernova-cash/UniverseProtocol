@@ -68,6 +68,7 @@ contract LPPool is
         uint256 initreward_,
         uint256 starttime_ 
     ) public {
+        require(snGroup != address(0), "LPPool: the zero address");
         sShare = IERC20(sShare_);
         lpt = IERC20(lptoken_);
         starttime = starttime_;

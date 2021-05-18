@@ -35,7 +35,7 @@ contract ShareSplit is AdminRole{
         fund = fund_;
     }
 
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() external view returns (uint256) {
         return _totalSupply;
     }
 
@@ -43,13 +43,13 @@ contract ShareSplit is AdminRole{
         return _balances[account];
     }
 
-    function stake(uint256 amount) public {
+    function stake(uint256 amount) external {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         IERC20(share).safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw(uint256 amount) public {
+    function withdraw(uint256 amount) external {
         require(amount > 0, "Cannot withdraw 0");
         require(amount <= _balances[msg.sender], "Cannot withdraw");
 
@@ -58,31 +58,31 @@ contract ShareSplit is AdminRole{
         IERC20(share).safeTransfer(msg.sender, amount);
     }
 
-    function split() public {
+    function split() external {
         uint256 amount = balanceOf(msg.sender);
         require(amount > 0, "Cannot split 0");
 
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = 0;
 
-        IERC20(share).safeTransfer(fund, amount);
-
         _vShareRewards[msg.sender] = _vShareRewards[msg.sender].add(amount);
         _sShareRewards[msg.sender] = _sShareRewards[msg.sender].add(amount);
 
-        SShare(sShare).mint(address(this), amount);
-        VShare(vShare).mint(address(this), amount);
+        IERC20(share).safeTransfer(fund, amount);
+
+        require(SShare(sShare).mint(address(this), amount), "sShare mint fail");
+        require(VShare(vShare).mint(address(this), amount), "vShare mint fail");
     }
 
-    function earnedV(address account) public view returns (uint256) {
+    function earnedV(address account) external view returns (uint256) {
         return _vShareRewards[account];
     }
 
-    function earnedS(address account) public view returns (uint256) {
+    function earnedS(address account) external view returns (uint256) {
         return _sShareRewards[account];
     }
 
-    function getRewardV() public {
+    function getRewardV() external {
         require(voteStats == 0, "Cannot withdraw when voting");
 
         uint256 reward = _vShareRewards[msg.sender];
@@ -92,7 +92,7 @@ contract ShareSplit is AdminRole{
         IERC20(vShare).safeTransfer(msg.sender, reward);
     }
 
-    function getRewardS() public {
+    function getRewardS() external {
         uint256 reward = _sShareRewards[msg.sender];
         require(reward > 0, "Cannot getRewardS 0");
 
@@ -100,12 +100,15 @@ contract ShareSplit is AdminRole{
         IERC20(sShare).safeTransfer(msg.sender, reward);
     }
 
-    function stakeV(uint256 amount) public {
+    function stakeV(uint256 amount) external {
         _vShareRewards[msg.sender] = _vShareRewards[msg.sender].add(amount);
         IERC20(vShare).safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function setVoteStats(uint8 voteStats_) public onlyAdmin {
+    function setVoteStats(uint8 voteStats_) external onlyAdmin {
         voteStats = voteStats_;
+        emit SetVoteStats(voteStats_);
     }
+
+    event SetVoteStats(uint8 voteStats);
 }

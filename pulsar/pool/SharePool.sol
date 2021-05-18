@@ -23,6 +23,7 @@ contract SharePool is CASHWrapper, ContractGuard{
         address snGroup_,
         uint256 starttime_
     ) public {
+        require((share_ != address(0)) && (fund_ != address(0)) && (snGroup_ != address(0)), "SharePool: the zero address");
         share = share_;
         cash = IERC20(cash_);
         starttime = starttime_;
@@ -32,7 +33,7 @@ contract SharePool is CASHWrapper, ContractGuard{
 
     mapping(address => uint256) private investors;
 
-    function earned(address investor) public view returns (uint256) {
+    function earned(address investor) external view returns (uint256) {
         return investors[investor].mul(95).div(100);
     }
 
@@ -43,21 +44,17 @@ contract SharePool is CASHWrapper, ContractGuard{
     {
         require(amount > 0, 'SharePool: Cannot stake 0');
         require(block.timestamp >= starttime, 'SharePool: not start');
+        require(totalSupply.add(amount) <= IERC20(peg).balanceOf(this));
 
         super.stake(amount);
         emit Staked(msg.sender, amount);
     }
 
     function withdraw(uint256 amount)
-        public
+        external
         override
     {
         require(0 > 1, "unable to withdraw");
-    }
-
-    function exit() external {
-        require(block.timestamp >= starttime, 'CashPool: not start');
-        getReward();
     }
 
     function getReward() public {
@@ -82,7 +79,7 @@ contract SharePool is CASHWrapper, ContractGuard{
             totalSupply() > 0,
             'SharePool: Cannot allocate when totalSupply is 0'
         );
-
+        
         uint256 rps = amount.mul(10 ** 18).div(totalSupply());
 
         address[] memory _addrList = addrList(); 
@@ -92,6 +89,8 @@ contract SharePool is CASHWrapper, ContractGuard{
         }
         emit RewardAdded(amount);
 
+        balanceClean();
+
         uint256 fundamount = totalSupply();
         cash.safeApprove(fund, fundamount);
         ISimpleERCFund(fund).deposit(
@@ -100,8 +99,6 @@ contract SharePool is CASHWrapper, ContractGuard{
             'SharePool: Desposit Fund'
         );
         emit DespositFund(now, fundamount);
-    
-        balanceClean();
     }
 
     function updateStartTime(uint256 starttime_)
@@ -109,15 +106,20 @@ contract SharePool is CASHWrapper, ContractGuard{
         onlyAdmin
     {   
         starttime = starttime_;
+        emit UpdateStartTime(starttime_);
     }
 
-    function setFund(address newFund) public onlyAdmin {
+    function setFund(address newFund) external onlyAdmin {
+        require(newFund != address(0), "setFund: the zero address");
         fund = newFund;
+        emit SetFund(newFund);
     }
 
     event RewardAdded(uint256 reward);
     event Staked(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
     event DespositFund(uint256 timestamp, uint256 fundamount);
+    event UpdateStartTime(uint256 timestamp);
+    event SetFund(address newFund);
 
 }

@@ -24,11 +24,11 @@ contract SHAREWrapper2 {
         return _totalSupply0.add(_totalSupply1);
     }
 
-    function totalSupply0() public view returns (uint256) {
+    function totalSupply0() external view returns (uint256) {
         return _totalSupply0;
     }
 
-    function totalSupply1() public view returns (uint256) {
+    function totalSupply1() external view returns (uint256) {
         return _totalSupply1;
     }
 
@@ -36,7 +36,7 @@ contract SHAREWrapper2 {
         return _balances0[account].add(_balances1[account]);
     }
 
-    function balanceOf0(address account) public view returns (uint256) {
+    function balanceOf0(address account) external view returns (uint256) {
         return _balances0[account];
     }
 
@@ -67,7 +67,7 @@ contract SHAREWrapper2 {
         share0.safeTransfer(msg.sender, amount);
     }
 
-    function withdraw1(uint256 amount) public virtual {
+    function withdraw1(uint256 amount) external virtual {
         uint256 directorLPT1 = _balances1[msg.sender];
         require(
             directorLPT1 >= amount,
@@ -144,7 +144,7 @@ contract ShareBoardroom2 is SHAREWrapper2, ContractGuard, AdminRole {
 
     /* ========== VIEW FUNCTIONS ========== */
 
-    function getLastStakeTime() public view returns (uint256) {
+    function getLastStakeTime() external view returns (uint256) {
         return lastStakeTime[msg.sender];
     }
 
@@ -176,7 +176,7 @@ contract ShareBoardroom2 is SHAREWrapper2, ContractGuard, AdminRole {
 
     // =========== Director getters
 
-    function rewardPerLPT() public view returns (uint256) {
+    function rewardPerLPT() external view returns (uint256) {
         return getLatestSnapshot().rewardPerLPT;
     }
 
@@ -199,9 +199,9 @@ contract ShareBoardroom2 is SHAREWrapper2, ContractGuard, AdminRole {
         updateReward(msg.sender)
     {
         require(amount > 0, "Expansion: Cannot stake 0");
+        lastStakeTime[msg.sender] = block.timestamp;
         super.stake0(amount);
         emit Staked(msg.sender, amount);
-        lastStakeTime[msg.sender] = block.timestamp;
     }
 
     function stake1(uint256 amount)

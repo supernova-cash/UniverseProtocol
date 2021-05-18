@@ -23,12 +23,12 @@ contract Cash is ERC20Burnable, AdminRole {
         return balanceAfter > balanceBefore;
     }
 
-    function burn(uint256 amount) external override onlyAdmin {
+    function burn(uint256 amount) public override onlyAdmin {
         super.burn(amount);
     }
 
     function burnFrom(address account, uint256 amount)
-        external
+        public
         override
         onlyAdmin
     {

@@ -9,7 +9,7 @@ contract Share is ERC20Burnable, AdminRole {
     }
 
     function mint(address recipient_, uint256 amount_)
-        public
+        external
         onlyAdmin
         returns (bool)
     {
@@ -38,7 +38,7 @@ contract SShare is ERC20Burnable, AdminRole {
     }
 
     function mint(address recipient_, uint256 amount_)
-        public
+        external
         onlyAdmin
         returns (bool)
     {
@@ -65,7 +65,7 @@ contract VShare is ERC20Burnable, AdminRole {
     constructor() public ERC20("vSHARE", "vSHARE") {}
 
     function mint(address recipient_, uint256 amount_)
-        public
+        external
         onlyAdmin
         returns (bool)
     {

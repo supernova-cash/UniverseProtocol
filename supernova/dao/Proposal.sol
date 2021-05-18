@@ -25,7 +25,6 @@ contract Proposal {
     }
 
     mapping(address => uint256) voterAmountMap; //用户已经投票数
-    address[] public voterList;
 
     event Voted(address voter, uint256 amount, uint256 index);
 
@@ -38,6 +37,7 @@ contract Proposal {
         string memory _description,
         uint256 _itemCount
     ) public {
+        require(_shareSplit != address(0), "Proposal: the zero address");
         shareSplit = ShareSplit(_shareSplit);
         startTime = _startTime;
         endTime = _endTime;
@@ -51,10 +51,6 @@ contract Proposal {
         return totalVotes.length;
     }
 
-    function getVoterCount() external view returns (uint256) {
-        return voterList.length;
-    }
-
     function vote(uint256 voteItem) external {
         require(
             block.timestamp >= startTime && block.timestamp <= endTime,
@@ -65,12 +61,8 @@ contract Proposal {
         uint256 balance = shareSplit.earnedV(msg.sender);
         require(balance > 0, "No voting rights");
 
+        require(balance > voterAmountMap[msg.sender], "No voting rights");
         uint256 amount = balance.sub(voterAmountMap[msg.sender]);
-        require(amount > 0, "No voting rights");
-
-        if(voterAmountMap[msg.sender] > 0){
-            voterList.push(msg.sender);
-        }
 
         totalVotes[voteItem] = totalVotes[voteItem].add(amount);
         voterAmountMap[msg.sender] = balance;
@@ -78,7 +70,7 @@ contract Proposal {
         emit Voted(msg.sender, amount, voteItem);
     }
 
-    function exist(address voter) public view returns (bool) {
+    function exist(address voter) external view returns (bool) {
         if(voterAmountMap[voter] > 0){
             return true;
         }

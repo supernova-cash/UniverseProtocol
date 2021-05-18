@@ -21,6 +21,7 @@ contract PegPool is CASHWrapper, ContractGuard{
         address fund_,
         uint256 starttime_
     ) public {
+        require((peg_ != address(0)) && (fund_ != address(0)) && (cash_ != address(0)), "PegPool: the zero address");
         peg = peg_;
         cash = IERC20(cash_);
         starttime = starttime_;
@@ -50,11 +51,6 @@ contract PegPool is CASHWrapper, ContractGuard{
         override
     {
         require(0 > 1, "unable to withdraw");
-    }
-
-    function exit() external {
-        require(block.timestamp >= starttime, 'CashPool: not start');
-        getReward();
     }
 
     function getReward() public {
@@ -87,6 +83,8 @@ contract PegPool is CASHWrapper, ContractGuard{
             investors[_addrList[i]] = investors[_addrList[i]].add(reward);
         }
         emit RewardAdded(amount);
+    
+        balanceClean();
 
         uint256 fundamount = totalSupply();
         cash.safeApprove(fund, fundamount);
@@ -96,8 +94,6 @@ contract PegPool is CASHWrapper, ContractGuard{
             'PegPool: Desposit Fund'
         );
         emit DespositFund(now, fundamount);
-    
-        balanceClean();
     }
 
     function updateStartTime(uint256 starttime_)
@@ -105,15 +101,20 @@ contract PegPool is CASHWrapper, ContractGuard{
         onlyAdmin
     {   
         starttime = starttime_;
+        emit UpdateStartTime(starttime_);
     }
 
     function setFund(address newFund) public onlyAdmin {
+        require(newFund != address(0), "setFund: the zero address");
         fund = newFund;
+        emit SetFund(newFund);
     }
 
     event RewardAdded(uint256 reward);
     event Staked(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
     event DespositFund(uint256 timestamp, uint256 fundamount);
+    event UpdateStartTime(uint256 timestamp);
+    event SetFund(address newFund);
 
 }

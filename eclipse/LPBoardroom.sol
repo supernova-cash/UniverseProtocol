@@ -107,7 +107,7 @@ contract LPBoardroom is LPTWrapper, ContractGuard, AdminRole {
 
     /* ========== VIEW FUNCTIONS ========== */
 
-    function getLastStakeTime() public view returns (uint256) {
+    function getLastStakeTime() external view returns (uint256) {
         return lastStakeTime[msg.sender];
     }
 
@@ -139,7 +139,7 @@ contract LPBoardroom is LPTWrapper, ContractGuard, AdminRole {
 
     // =========== Director getters
 
-    function rewardPerLPT() public view returns (uint256) {
+    function rewardPerLPT() external view returns (uint256) {
         return getLatestSnapshot().rewardPerLPT;
     }
 

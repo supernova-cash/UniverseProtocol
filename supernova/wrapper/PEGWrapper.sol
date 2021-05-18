@@ -31,19 +31,19 @@ contract PEGWrapper is AdminRole{
     mapping(address => uint256) private _balances;
     address[] private _addrList;
 
-    function addrList() public view returns (address [] memory) {
+    function addrList() external view returns (address [] memory) {
         return _addrList;
     }
 
-    function balanceOf(address account) public view returns (uint256) {
+    function balanceOf(address account) external view returns (uint256) {
         return _balances[account];
     }
 
-    function totalSupply() onlyAdmin public view returns (uint256) {
+    function totalSupply() onlyAdmin external view returns (uint256) {
         return _totalSupply;
     }
 
-    function stake(uint256 amount) public virtual {
+    function stake(uint256 amount) external virtual {
         if(_balances[msg.sender] == 0){
             _addrList.push(msg.sender);  //新来的 记录地址
         }
@@ -53,11 +53,11 @@ contract PEGWrapper is AdminRole{
         peg.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw(uint256 amount) public virtual {
+    function withdraw(uint256 amount) external virtual {
         require(0 > 1, "unable to withdraw");
     }
 
-    function balanceClean() onlyAdmin public {
+    function balanceClean() onlyAdmin external {
         _totalSupply = 0 ;
         
         for(uint i = 0; i < _addrList.length; i++){

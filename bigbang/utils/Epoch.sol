@@ -41,15 +41,15 @@ contract Epoch is AdminRole {
 
     /* ========== VIEW FUNCTIONS ========== */
 
-    function getCurrentEpoch() public view returns (uint256) {
+    function getCurrentEpoch() external view returns (uint256) {
         return epoch;
     }
 
-    function getPeriod() public view returns (uint256) {
+    function getPeriod() external view returns (uint256) {
         return period;
     }
 
-    function getStartTime() public view returns (uint256) {
+    function getStartTime() external view returns (uint256) {
         return startTime;
     }
 
@@ -61,5 +61,8 @@ contract Epoch is AdminRole {
 
     function setPeriod(uint256 _period) external onlyAdmin {
         period = _period;
+        emit SetPeriod(_period);
     }
+
+    event SetPeriod(uint256 period);
 }

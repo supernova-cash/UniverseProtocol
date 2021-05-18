@@ -21,9 +21,9 @@ contract ContractGuard {
             'ContractGuard: one block, one function'
         );
 
-        _;
-
         _status[block.number][tx.origin] = true;
         _status[block.number][msg.sender] = true;
+
+        _;
     }
 }

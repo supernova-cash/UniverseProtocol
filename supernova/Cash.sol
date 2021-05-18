@@ -12,7 +12,7 @@ contract Cash is ERC20Burnable, AdminRole {
     }
 
     function mint(address recipient_, uint256 amount_)
-        public
+        external
         onlyAdmin
         returns (bool)
     {

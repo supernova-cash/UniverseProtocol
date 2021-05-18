@@ -84,20 +84,12 @@ contract Pool is TokenWrapper, AdminRole {
         _;
     }
 
-    function enabled() public view returns (bool) {
-        return true;
-    }
-
     function lastTimeRewardApplicable() public view returns (uint256) {
         return Math.min(block.timestamp, periodFinish);
     }
 
     function rewardPerToken() public view returns (uint256) {
         if (totalSupply() == 0) {
-            return rewardPerTokenStored;
-        }
-
-        if (!enabled()) {
             return rewardPerTokenStored;
         }
 
