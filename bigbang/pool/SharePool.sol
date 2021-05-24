@@ -44,7 +44,6 @@ contract SharePool is CASHWrapper, ContractGuard{
     {
         require(amount > 0, 'SharePool: Cannot stake 0');
         require(block.timestamp >= starttime, 'SharePool: not start');
-        require(totalSupply.add(amount) <= IERC20(peg).balanceOf(this));
 
         super.stake(amount);
         emit Staked(msg.sender, amount);
@@ -90,7 +89,6 @@ contract SharePool is CASHWrapper, ContractGuard{
         emit RewardAdded(amount);
 
     
-
         uint256 fundamount = totalSupply();
         cash.safeApprove(fund, fundamount);
         ISimpleERCFund(fund).deposit(
