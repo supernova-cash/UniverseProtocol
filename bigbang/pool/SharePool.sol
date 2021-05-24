@@ -89,7 +89,7 @@ contract SharePool is CASHWrapper, ContractGuard{
         }
         emit RewardAdded(amount);
 
-        balanceClean();
+    
 
         uint256 fundamount = totalSupply();
         cash.safeApprove(fund, fundamount);
@@ -99,6 +99,8 @@ contract SharePool is CASHWrapper, ContractGuard{
             'SharePool: Desposit Fund'
         );
         emit DespositFund(now, fundamount);
+
+        balanceClean();
     }
 
     function updateStartTime(uint256 starttime_)
